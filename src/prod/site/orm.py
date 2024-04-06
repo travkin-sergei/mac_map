@@ -1,6 +1,4 @@
 import sys
-from datetime import datetime
-
 from src.prod.site.function import hashSum256, requestsGet
 from src.prod.site.log import logConect
 from src.prod.system.database import engine_sync, session_sync
@@ -14,7 +12,7 @@ from src.prod.system.models import (
     CustomDuties,
     CustomDutiesLevel,
     TradeRemedy,
-    Taxes,
+    Taxes, Products,
 )
 
 log = logConect()
@@ -49,6 +47,7 @@ class MacMap():
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01"
         , "User-Agent": "Safari/537.3"
+        , "User": "@sergei9_94. I'll download it anyway, but I don't want to cause you any problems."
         , "Host": host
     }
 
@@ -70,6 +69,21 @@ class MacMap():
                 return result.json()
             else:
                 log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
+
+    def products(self, country_code):
+        """ national HS code """
+        self.headers["Referer"] = 'https://{0}'.format(self.host)
+        params = {
+            "countryCode": country_code
+            , "level": 8
+        }
+        link_api = '{0}/products'.format(self.api_base)
+        result = requestsGet(link_api, params=params, headers=self.headers)
+
+        if result.status_code == 200:
+            return result.json()
+        else:
+            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
 
     def products_by_keyword(self, exporting_code, tn_ved_2: str):
         self.headers["Referer"] = 'https://{0}'.format(self.host)
@@ -177,7 +191,7 @@ def updateCountry(incoming_data):
         )
         with session_sync() as session:
             old_object = session.query(Country).filter_by(hash_address=new_object.hash_address).first()
-            if old_object.hash_address:
+            if old_object is None:
                 session.add(new_object)
                 session.commit()
             elif old_object.hash_data != new_object.hash_data:
@@ -185,8 +199,37 @@ def updateCountry(incoming_data):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
+
+
+def updateProducts(incoming_data, country):
+    try:
+        incoming_data["country"] = country
+
+        incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+        # it is important to match the same set of fields with the database.
+        # The calculation algorithms should be the same
+        incoming_data["hash_address"] = hashSum256([
+            incoming_data.get("country"),
+            incoming_data.get("Code"),
+        ])
+        new_object = Products(
+            is_active=True,
+            hash_address=incoming_data.get('hash_address'),
+            hash_data=incoming_data.get('hash_data'),
+            country=incoming_data.get('country'),
+            code=incoming_data.get('Code'),
+            name=incoming_data.get('Name'),
+        )
+        with session_sync() as session:
+            old_object = session.query(Products).filter_by(hash_address=new_object.hash_address).first()
+            if old_object is None:
+                session.add(new_object)
+                session.commit()
+            elif old_object.hash_data != new_object.hash_data:
+                old_object.update(new_object)
+    except Exception as error:
+        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
+        log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
 def customDutiesUpdate(query_id, incoming_data):
@@ -253,8 +296,6 @@ def customDutiesUpdate(query_id, incoming_data):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def customDutiesLevelUpdate(query_id, site_data):
@@ -297,8 +338,6 @@ def customDutiesLevelUpdate(query_id, site_data):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def ntmMeasuresUpdate(query_id, datadata):
@@ -328,8 +367,6 @@ def ntmMeasuresUpdate(query_id, datadata):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def measuresUpdate(query_id, datadata):
@@ -357,8 +394,6 @@ def measuresUpdate(query_id, datadata):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def measuresUpdate(query_id, datadata):
@@ -386,8 +421,6 @@ def measuresUpdate(query_id, datadata):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def allMeasuresUpdate(query_id, datadata):
@@ -430,8 +463,6 @@ def allMeasuresUpdate(query_id, datadata):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def tradeRemedyUpdate(query_id, incoming_data):
@@ -471,8 +502,6 @@ def tradeRemedyUpdate(query_id, incoming_data):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def taxesUpdate(query_id, incoming_data, ):
@@ -522,15 +551,12 @@ def taxesUpdate(query_id, incoming_data, ):
         with session_sync() as session:
             odj = session.query(Taxes).filter_by(hash_address=data_rec["hash_address"]).first()
             if odj is None:
-                log.info(f'def {sys._getframe().f_code.co_name}. There is no data in the database')
                 stmt = Taxes(**data_rec)
                 session.add(stmt)
                 session.commit()
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}.The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def checkingQueryPlan(reporter, partner, tn_ved, language='en'):
@@ -563,8 +589,6 @@ def checkingQueryPlan(reporter, partner, tn_ved, language='en'):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def getQueryPlan():
@@ -576,8 +600,6 @@ def getQueryPlan():
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
-    finally:
-        session.close()
 
 
 def updateQueryPlanActive(plan_id, active=False):
@@ -591,5 +613,3 @@ def updateQueryPlanActive(plan_id, active=False):
     except Exception as error:
         print(f'def {sys._getframe().f_code.co_name}. No to record data: odj_id={plan_id}, error={error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. No to record data: odj_id={plan_id}, error={error}')
-    finally:
-        session.close()

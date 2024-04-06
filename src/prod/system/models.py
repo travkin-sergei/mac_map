@@ -4,8 +4,10 @@ from sqlalchemy import (
     func,
     DateTime,
     Boolean,
+    Text,
     String,
-    sql, UniqueConstraint,
+    sql,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, DeclarativeBase, registry
 from src.prod.site.log import logConect
@@ -56,6 +58,7 @@ class Country(Base):
         is_active: Mapped[is_active]
         hash_address: Mapped[hash_address | None]
         hash_data: Mapped[hash_data | None]
+
         foreign_id: Mapped[int] = mapped_column(comment='внешний id')
         code: Mapped[str | None] = mapped_column(comment='цифровой код длинной 3 символа')
         name: Mapped[str | None] = mapped_column(comment='Название страны')
@@ -80,11 +83,10 @@ class CustomDuties(Base):
         created_at: Mapped[created_at]
         update_at: Mapped[update_at]
         is_active: Mapped[is_active]
-
         hash_address: Mapped[hash_address | None]
         hash_data: Mapped[hash_data | None]
-        query_id: Mapped[int] = mapped_column(comment='id запроса')
 
+        query_id: Mapped[int] = mapped_column(comment='id запроса')
         n_t_l_c_code_label: Mapped[str | None] = mapped_column(comment='Кодовая метка NTL C')
         n_t_l_c_code_tooltip_label: Mapped[str | None] = mapped_column(comment='Метка всплывающей подсказки кода NTL C')
         n_t_l_c_description_label: Mapped[str | None] = mapped_column(comment='Этикетка с описанием NTL C')
@@ -155,7 +157,6 @@ class CustomDutiesLevel(Base):
         created_at: Mapped[created_at]
         update_at: Mapped[update_at]
         is_active: Mapped[is_active]
-
         hash_address: Mapped[hash_address | None]
         hash_data: Mapped[hash_data | None]
         query_id: Mapped[int] = mapped_column(comment='id запроса')
@@ -391,6 +392,28 @@ class AllMeasures(Base):
         log.warning(f'create class {__qualname__} {error}')
 
 
+class Products(Base):
+    try:
+        __tablename__ = 'products'
+        __table_args__ = {
+            "schema": "macmap",
+            "comment": "Список ТН ВЭД всех стран",
+        }
+        id: Mapped[int_pk]
+        created_at: Mapped[created_at]
+        update_at: Mapped[update_at]
+        is_active: Mapped[is_active]
+        hash_address: Mapped[hash_address | None]
+        hash_data: Mapped[hash_data | None]
+        country: Mapped[str | None] = mapped_column(comment='Страна')
+        code: Mapped[str | None] = mapped_column(comment='ТН ВЭД')
+        name: Mapped[str | None] = mapped_column(Text,comment='Описание ТН ВЭД')
+
+        log.info(f'create class {__qualname__} OK')
+    except Exception as error:
+        log.warning(f'create class {__qualname__} {error}')
+
+
 class PlanRequest(Base):
     try:
         __tablename__ = 'plan_request'
@@ -402,9 +425,9 @@ class PlanRequest(Base):
         created_at: Mapped[created_at]
         update_at: Mapped[update_at]
         is_active: Mapped[is_active]
-
         hash_address: Mapped[hash_address | None]
         hash_data: Mapped[hash_data | None]
+
         reporter: Mapped[str | None] = mapped_column(comment='экспортер')
         partner: Mapped[str | None] = mapped_column(comment='импортер')
         tn_ved: Mapped[str | None] = mapped_column(comment='ТН ВЭД')

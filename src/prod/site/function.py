@@ -37,6 +37,8 @@ def requestsGet(link, params, **kwargs):
 
 def camelToSnake(data):
     for old_key in data:
-        new_key = re.sub(r'(?<!^)(?=[A-Z])', '_', old_key).lower()
+        for old_key in data:
+            for old_key in data:
+                new_key = re.sub(r'(?<!^)(?=[A-Z])', '_', old_key).lower()
         print(old_key, ';', new_key)
     return data
