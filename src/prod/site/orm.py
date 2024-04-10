@@ -1,6 +1,5 @@
 import sys
-from src.prod.site.function import hashSum256, requestsGet
-from src.prod.site.log import logConect
+from src.prod.site.function import hashSum256
 from src.prod.system.database import engine_sync, session_sync
 from src.prod.system.models import (
     AllMeasures,
@@ -12,11 +11,8 @@ from src.prod.system.models import (
     CustomDuties,
     CustomDutiesLevel,
     TradeRemedy,
-    Taxes, Products,
+    Taxes, Products, log,
 )
-
-log = logConect()
-
 
 def ormCreateTable():
     """Create Table"""
@@ -25,148 +21,6 @@ def ormCreateTable():
         engine_sync.echo = True
     except Exception as error:
         log.error(f'def {sys._getframe().f_code.co_name}: {error}')
-
-
-# ==================================================== Create Class ====================================================
-def getApi(link_api, params, headers):
-    """for the MacMapResults model"""
-    try:
-        result = requestsGet(link_api, params=params, headers=headers)
-        if result.status_code == 200:
-            return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-    except Exception as error:
-        log.error(f'def {sys._getframe().f_code.co_name}: {error}')
-
-
-class MacMap():
-    host = "www.macmap.org"
-    url_base = 'https://{0}'.format(host)
-    api_base = 'https://www.macmap.org/api'
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01"
-        , "User-Agent": "Safari/537.3"
-        , "User": "@sergei9_94. I'll download it anyway, but I don't want to cause you any problems."
-        , "Host": host
-    }
-
-    def __init__(self, host=host, url_base=url_base, api_base=api_base, headers=headers):
-        self.host = host
-        self.url_base = url_base
-        self.headers = headers
-        self.api_base = api_base
-
-    # получаем список стран
-    def countries(self):
-        self.headers["Referer"] = 'https://{0}'.format(self.host)
-        link_api = '{0}/countries'.format(self.api_base)
-        result = requestsGet(link_api, params=None, headers=self.headers)
-        if result is None:
-            log.warning(f'def {sys._getframe().f_code.co_name}: result is None ')
-        else:
-            if result.status_code == 200:
-                return result.json()
-            else:
-                log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-
-    def products(self, country_code):
-        """ national HS code """
-        self.headers["Referer"] = 'https://{0}'.format(self.host)
-        params = {
-            "countryCode": country_code
-            , "level": 8
-        }
-        link_api = '{0}/products'.format(self.api_base)
-        result = requestsGet(link_api, params=params, headers=self.headers)
-
-        if result.status_code == 200:
-            return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-
-    def products_by_keyword(self, exporting_code, tn_ved_2: str):
-        self.headers["Referer"] = 'https://{0}'.format(self.host)
-        params = {
-            "countryCode": exporting_code
-            , "level": 6
-            , "keyword": tn_ved_2
-        }
-        link_api = '{0}/v2/products-by-keyword'.format(self.api_base)
-        result = requestsGet(link_api, params=params, headers=self.headers)
-
-        if result.status_code == 200:
-            return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-
-    def ntlc_product(self, exporting_code: str, tn_ved_code: str):
-        self.headers["Referer"] = 'https://{0}'.format(self.host)
-        params = {
-            "countryCode": exporting_code
-            , "level": 8
-            , "code": tn_ved_code
-        }
-        link_api = '{0}/v2/ntlc-products'.format(self.api_base)
-        result = requestsGet(link_api, params=params, headers=self.headers)
-
-        if result.status_code == 200:
-            return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-
-
-class MacMapResults(MacMap):
-    """exporting_code = reporter"""
-    url_base = MacMap.url_base
-    headers = MacMap.headers
-    api_base = MacMap.api_base
-
-    def __init__(
-            self, reporter, partner, tn_ved_10, language='en'
-            , url_base=url_base
-            , headers=headers
-            , api_base=api_base
-    ):
-        self.reporter = reporter
-        self.partner = partner
-        self.tn_ved = tn_ved_10
-        self.language = language
-        self.api_base = '{0}/results'.format(api_base)
-        self.headers = headers
-        headers[
-            "Referer"
-        ] = '{url_base}/{language}//query/results?reporter={rep}&partner={par}&product={tn_ved}&level=6'.format(
-            url_base=url_base, language=language, rep=reporter, par=partner, tn_ved=tn_ved_10
-        )
-        self.params = {
-            "reporter": reporter
-            , "partner": partner
-            , "product": tn_ved_10
-        }
-
-    def customduties(self):
-        link_api = '{0}/customduties'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
-        return result
-
-    def ntm_measures(self):
-        link_api = '{0}/ntm-measures'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
-        return result
-
-    def traderemedy(self):
-        link_api = '{0}/traderemedy'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
-        return result
-
-    def taxes(self):
-        link_api = '{0}/taxes'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
-        return result
-
-
-# ==================================================== Create Class ====================================================
 def updateCountry(incoming_data):
     try:
         if not incoming_data.get('language'):
@@ -197,7 +51,6 @@ def updateCountry(incoming_data):
             elif old_object.hash_data != new_object.hash_data:
                 old_object.update(new_object)
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -228,11 +81,13 @@ def updateProducts(incoming_data, country):
             elif old_object.hash_data != new_object.hash_data:
                 old_object.update(new_object)
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
 def customDutiesUpdate(query_id, incoming_data):
+    incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+    incoming_data["query_id"] = query_id
+    incoming_data["hash_address"] = incoming_data["hash_data"]
     data_rec = {
         "query_id": incoming_data.get('query_id'),
         "hash_data": incoming_data.get('hash_data'),
@@ -281,9 +136,6 @@ def customDutiesUpdate(query_id, incoming_data):
         "beneficiary_list_label": incoming_data.get('BeneficiaryListLabel')
     }
 
-    data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-    data_rec["query_id"] = query_id
-    data_rec["hash_address"] = data_rec["hash_data"]
     try:
 
         with session_sync() as session:
@@ -294,7 +146,6 @@ def customDutiesUpdate(query_id, incoming_data):
                 session.commit()
             session.close()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -302,7 +153,14 @@ def customDutiesLevelUpdate(query_id, site_data):
     custom_duties_level = site_data["CustomDuty"]
     try:
         for incoming_data in custom_duties_level:
+            incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+            incoming_data["query_id"] = query_id
+            incoming_data["hash_address"] = hashSum256([i for i in incoming_data.values()])
             data_rec = {
+                "query_id": incoming_data.get('query_id'),
+                "hash_data": incoming_data.get('hash_data'),
+                "hash_address": incoming_data.get('hash_address'),
+
                 "n_t_l_c_code": incoming_data.get('NTLCCode'),
                 "n_t_l_c_description": incoming_data.get('NTLCDescription'),
                 "tariff_regime": incoming_data.get('TariffRegime'),
@@ -324,19 +182,14 @@ def customDutiesLevelUpdate(query_id, site_data):
                 "quota_link_label": incoming_data.get('QuotaLinkLabel'),
                 "fta_roo_detail_link_label": incoming_data.get('FtaRooDetailLinkLabel'),
             }
-            data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-            data_rec["query_id"] = query_id
-            data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
             with session_sync() as session:
                 odj = session.query(CustomDutiesLevel).filter_by(hash_address=data_rec["hash_address"]).first()
                 if odj is None:
-                    log.info(f'def {sys._getframe().f_code.co_name}. There is no data in the database')
                     stmt = CustomDutiesLevel(**data_rec)
                     session.add(stmt)
                     session.commit()
                 session.close()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -344,7 +197,14 @@ def ntmMeasuresUpdate(query_id, datadata):
     try:
 
         for incoming_data in datadata:
+            data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
+            data_rec["query_id"] = query_id
+            data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
             data_rec = {
+                "query_id": incoming_data.get('query_id'),
+                "hash_data": incoming_data.get('hash_data'),
+                "hash_address": incoming_data.get('hash_address'),
+
                 "measure_section": incoming_data.get('MeasureSection'),
                 "measure_direction": incoming_data.get('MeasureDirection'),
                 "measure_total_count_label": incoming_data.get('MeasureTotalCountLabel'),
@@ -355,9 +215,6 @@ def ntmMeasuresUpdate(query_id, datadata):
                 "data_source": incoming_data.get('DataSource'),
                 "transposition_comment": incoming_data.get('TranspositionComment'),
             }
-            data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-            data_rec["query_id"] = query_id
-            data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
             with session_sync() as session:
                 odj = session.query(NtmMeasures).filter_by(hash_address=data_rec["hash_address"]).first()
                 if odj is None:
@@ -365,7 +222,6 @@ def ntmMeasuresUpdate(query_id, datadata):
                     session.add(stmt)
                     session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -374,16 +230,21 @@ def measuresUpdate(query_id, datadata):
         for i_data in datadata:
             d_data = i_data["Measures"]
             for incoming_data in d_data:
+                incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+                incoming_data["query_id"] = query_id
+                incoming_data["hash_address"] = hashSum256([i for i in incoming_data.values()])
 
                 data_rec = {
+                    "query_id": incoming_data.get('query_id'),
+                    "hash_data": incoming_data.get('hash_data'),
+                    "hash_address": incoming_data.get('hash_address'),
+
                     "measure_code": incoming_data.get('MeasureCode'),
                     "measure_title": incoming_data.get('MeasureTitle'),
                     "measure_summary": incoming_data.get('MeasureSummary'),
                     "measure_count": incoming_data.get('MeasureCount'),
                 }
-                data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-                data_rec["query_id"] = query_id
-                data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
+
                 with session_sync() as session:
                     odj = session.query(Measures).filter_by(hash_address=data_rec["hash_address"]).first()
                     if odj is None:
@@ -392,7 +253,6 @@ def measuresUpdate(query_id, datadata):
                         session.add(stmt)
                         session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -401,15 +261,19 @@ def measuresUpdate(query_id, datadata):
         for i_data in datadata:
             d_data = i_data["Measures"]
             for incoming_data in d_data:
+                incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+                incoming_data["query_id"] = query_id
+                incoming_data["hash_address"] = hashSum256([i for i in incoming_data.values()])
                 data_rec = {
+                    "query_id": incoming_data.get('query_id'),
+                    "hash_data": incoming_data.get('hash_data'),
+                    "hash_address": incoming_data.get('hash_address'),
+
                     "measure_code": incoming_data.get('MeasureCode'),
                     "measure_title": incoming_data.get('MeasureTitle'),
                     "measure_summary": incoming_data.get('MeasureSummary'),
                     "measure_count": incoming_data.get('MeasureCount'),
                 }
-                data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-                data_rec["query_id"] = query_id
-                data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
                 # query hash_data. This is a reference book
                 with session_sync() as session:
                     odj = session.query(Measures).filter_by(hash_address=data_rec["hash_address"]).first()
@@ -419,7 +283,6 @@ def measuresUpdate(query_id, datadata):
                         session.add(stmt)
                         session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -428,7 +291,15 @@ def allMeasuresUpdate(query_id, datadata):
         for i_data in datadata:
             d_data = i_data["AllMeasures"]
             for incoming_data in d_data:
+                incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+                incoming_data["query_id"] = query_id
+                incoming_data["hash_address"] = hashSum256([i for i in incoming_data.values()])
+
                 data_rec = {
+                    "query_id": incoming_data.get('query_id'),
+                    "hash_data": incoming_data.get('hash_data'),
+                    "hash_address": incoming_data.get('hash_address'),
+
                     'code': incoming_data.get('Code'),
                     "title": incoming_data.get('Title'),
                     "summary": incoming_data.get('Summary'),
@@ -450,9 +321,7 @@ def allMeasuresUpdate(query_id, datadata):
                     "agency": incoming_data.get('Agency'),
                     "transposition_comm": incoming_data.get('TranspositionComm'),
                 }
-                data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-                data_rec["query_id"] = query_id
-                data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
+
                 with session_sync() as session:
                     odj = session.query(AllMeasures).filter_by(hash_address=data_rec["hash_address"]).first()
                     if odj is None:
@@ -461,13 +330,19 @@ def allMeasuresUpdate(query_id, datadata):
                         session.add(stmt)
                         session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
 def tradeRemedyUpdate(query_id, incoming_data):
     try:
+        incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+        incoming_data["query_id"] = query_id
+        incoming_data["hash_address"] = hashSum256([i for i in incoming_data.values()])
         data_rec = {
+            "query_id": incoming_data.get('query_id'),
+            "hash_data": incoming_data.get('hash_data'),
+            "hash_address": incoming_data.get('hash_address'),
+
             "th_exporting_country": incoming_data.get('ThExportingCountry'),
             "th_ntlc": incoming_data.get('ThNtlc'),
             "th_n_t_l_c_description": incoming_data.get('ThNTLCDescription'),
@@ -490,9 +365,6 @@ def tradeRemedyUpdate(query_id, incoming_data):
             "transposition_comment": incoming_data.get('TranspositionComment'),
             "trade_remedy_data": incoming_data.get('TradeRemedyData'),
         }
-        data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-        data_rec["query_id"] = query_id
-        data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
         with session_sync() as session:
             odj = session.query(TradeRemedy).filter_by(hash_address=data_rec["hash_address"]).first()
             if odj is None:
@@ -500,13 +372,20 @@ def tradeRemedyUpdate(query_id, incoming_data):
                 session.add(stmt)
                 session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
 def taxesUpdate(query_id, incoming_data, ):
     try:
+        incoming_data["hash_data"] = hashSum256([i for i in incoming_data.values()])
+        incoming_data["query_id"] = query_id
+        incoming_data["hash_address"] = hashSum256([i for i in incoming_data.values()])
+
         data_rec = {
+            "query_id": incoming_data.get('query_id'),
+            "hash_data": incoming_data.get('hash_data'),
+            "hash_address": incoming_data.get('hash_address'),
+
             "tax_information_label": incoming_data.get('TaxInformationLabel'),
             "tax_name_label": incoming_data.get('TaxNameLabel'),
             "p_d_f_of_legislation_label": incoming_data.get('PDFOfLegislationLabel'),
@@ -545,9 +424,7 @@ def taxesUpdate(query_id, incoming_data, ):
             "product_type_label": incoming_data.get('ProductTypeLabel'),
             "tax_data_view_models": incoming_data.get('TaxDataViewModels'),
         }
-        data_rec["hash_data"] = hashSum256([i for i in data_rec.values()])
-        data_rec["query_id"] = query_id
-        data_rec["hash_address"] = hashSum256([i for i in data_rec.values()])
+
         with session_sync() as session:
             odj = session.query(Taxes).filter_by(hash_address=data_rec["hash_address"]).first()
             if odj is None:
@@ -555,7 +432,6 @@ def taxesUpdate(query_id, incoming_data, ):
                 session.add(stmt)
                 session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}.The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -573,13 +449,12 @@ def checkingQueryPlan(reporter, partner, tn_ved, language='en'):
         with session_sync() as session:
             odj = session.query(PlanRequest).filter_by(hash_address=data_rec["hash_address"]).first()
             if odj is None:
-                log.info(f'def {sys._getframe().f_code.co_name}. There is no data in the database')
                 stmt = PlanRequest(**data_rec)
                 session.add(stmt)
                 session.commit()
-                return stmt
+                odj = session.query(PlanRequest).filter_by(hash_address=data_rec["hash_address"]).first()
+                return odj
             elif odj.hash_data != data_rec.get("hash_data"):
-                log.info(f'def {sys._getframe().f_code.co_name}. Updating the data')
                 odj.reporter = data_rec.get("reporter")
                 odj.partner = data_rec.get("partner")
                 odj.tn_ved = data_rec.get("tn_ved")
@@ -587,7 +462,6 @@ def checkingQueryPlan(reporter, partner, tn_ved, language='en'):
                 session.commit()
             return odj
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -598,7 +472,6 @@ def getQueryPlan():
             session.close()
             return result
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. The database refuse to record data: {error}')
 
 
@@ -611,5 +484,4 @@ def updateQueryPlanActive(plan_id, active=False):
             session.add(odj)
             session.commit()
     except Exception as error:
-        print(f'def {sys._getframe().f_code.co_name}. No to record data: odj_id={plan_id}, error={error}')
         log.exception(f'def {sys._getframe().f_code.co_name}. No to record data: odj_id={plan_id}, error={error}')

@@ -20,14 +20,37 @@ def hashSum256(*args):
 
 
 def requestsGet(link, params, **kwargs):
+    try:
+        requestsGet.call_count += 1
+        count_get = requestsGet.call_count
+    except AttributeError:
+        requestsGet.call_count = 1
+        count_get = requestsGet.call_count
+
+    proxies = {
+        'https': 'socks5://mGRWQE9F:tFk4qw8D@85.142.130.211:62679'
+    }
     result = None
     for _ in range(MAX_RETRIES):
         try:
-            result = requests.get(link, params, **kwargs)
-            result.encoding = 'utf-8'
-            result.raise_for_status()
-            log.info(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-            break
+            result = requests.get(link, params, **kwargs, )
+            match result.status_code == 200:
+                case 200:
+                    result.encoding = 'utf-8'
+                    result.raise_for_status()
+                    log.info(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
+                    break
+                case 403:
+                    log.info(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
+                    exit()
+                case 404:
+                    log.info(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
+                    exit()
+                case 500:
+                    log.info(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
+                    exit()
+                case _:
+                    pass
         except Exception as error:
             log.exception(f'def {sys._getframe().f_code.co_name}: {error}')
     else:

@@ -1,4 +1,4 @@
-from src.prod.site.orm import MacMap
+from src.prod.site.class_site import MacMap
 
 mac_map_main = MacMap()
 
