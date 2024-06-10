@@ -8,4 +8,5 @@ engine_sync = create_engine(
     # pool_size=5,
     # max_overflow=10,
 )
+
 session_sync = sessionmaker(engine_sync)

@@ -1,55 +1,51 @@
-import sys
+import uuid
+import requests
+from fake_useragent import UserAgent
 
-from src.prod.site.function import requestsGet
-from src.prod.site.log import logConect
-from src.prod.system.database import engine_sync
-from src.prod.system.models import Base
+from urllib3.util import Retry
+from requests.adapters import HTTPAdapter
 
-log = logConect()
+from src.prod.site.function import requests_get
 
 
 # ==================================================== Create Class ====================================================
-def getApi(link_api, params, headers):
-    """for the MacMapResults model"""
-    try:
-        result = requestsGet(link_api, params=params, headers=headers)
-        if result.status_code == 200:
-            return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
-    except Exception as error:
-        log.error(f'def {sys._getframe().f_code.co_name}: {error}')
-
 
 class MacMap():
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[502, 503, 504])
+    session.mount('http://', HTTPAdapter(max_retries=retries))
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    session_id = uuid.uuid4()
     host = "www.macmap.org"
     url_base = 'https://{0}'.format(host)
     api_base = 'https://www.macmap.org/api'
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01"
-        , "User-Agent": "Safari/537.3"
-        , "User": "@sergei9_94. I'll download it anyway, but I don't want to cause you any problems."
-        , "Host": host
-    }
 
-    def __init__(self, host=host, url_base=url_base, api_base=api_base, headers=headers):
-        self.host = host
-        self.url_base = url_base
-        self.headers = headers
-        self.api_base = api_base
+    headers = {
+        'Cookie': f'ASP.NET_SessionId={session_id}; path=/; secure; HttpOnly; SameSite=None; SameSite=None; Secure'
+        , 'Sec-Ch-Ua': '"Not(A:Brand";v="24", "Chromium";v="122"'
+        , 'Accept': 'application/json, text/javascript, */*; q=0.01'
+        , 'Content-Type': 'application/json; charset=utf-8'
+        , 'X-Requested-With': 'XMLHttpRequest'
+        , 'Sec-Ch-Ua-Mobile': '?0'
+        , 'User-Agent': UserAgent().random
+        , 'Sec-Ch-Ua-Platform': '"Windows"'
+        , 'Sec-Fetch-Site': 'same-origin'
+        , 'Sec-Fetch-Mode': 'cors'
+        , 'Sec-Fetch-Dest': 'empty'
+        , 'Accept-Encoding': 'gzip, deflate, br'
+        , 'Accept-Language': 'en-US,en;q=0.9'
+        , 'Priority': 'u=1, i'
+        , 'Connection': 'close'
+    }
 
     # получаем список стран
     def countries(self):
         self.headers["Referer"] = 'https://{0}'.format(self.host)
         link_api = '{0}/countries'.format(self.api_base)
-        result = requestsGet(link_api, params=None, headers=self.headers)
-        if result is None:
-            log.warning(f'def {sys._getframe().f_code.co_name}: result is None ')
-        else:
+        result = requests_get(self.session, link_api, params=None, headers=self.headers, )  # proxies=proxy)
+        if result:
             if result.status_code == 200:
                 return result.json()
-            else:
-                log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
 
     def products(self, country_code):
         """ national HS code """
@@ -59,14 +55,11 @@ class MacMap():
             , "level": 8
         }
         link_api = '{0}/products'.format(self.api_base)
-        result = requestsGet(link_api, params=params, headers=self.headers)
-
+        result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
         if result.status_code == 200:
             return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
 
-    def products_by_keyword(self, exporting_code, tn_ved_2: str):
+    def productsByKeyword(self, exporting_code, tn_ved_2: str):
         self.headers["Referer"] = 'https://{0}'.format(self.host)
         params = {
             "countryCode": exporting_code
@@ -74,14 +67,12 @@ class MacMap():
             , "keyword": tn_ved_2
         }
         link_api = '{0}/v2/products-by-keyword'.format(self.api_base)
-        result = requestsGet(link_api, params=params, headers=self.headers)
+        result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
 
         if result.status_code == 200:
             return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
 
-    def ntlc_product(self, exporting_code: str, tn_ved_code: str):
+    def ntlcProduct(self, exporting_code: str, tn_ved_code: str):
         self.headers["Referer"] = 'https://{0}'.format(self.host)
         params = {
             "countryCode": exporting_code
@@ -89,12 +80,42 @@ class MacMap():
             , "code": tn_ved_code
         }
         link_api = '{0}/v2/ntlc-products'.format(self.api_base)
-        result = requestsGet(link_api, params=params, headers=self.headers)
+
+        result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
+        if result.status_code == 200:
+            return result.json()
+
+    def getYears(self, exporting_code) -> str:
+        """
+        for
+        def custom_duties_by_year():
+            pass
+        https://www.macmap.org/api/getyears?datatype=Tariff&reporters=466
+        """
+        self.headers["Referer"] = 'https://{0}'.format(self.host)
+        params = {
+            "datatype": "Tariff",
+            "reporters": exporting_code,
+        }
+        link_api = '{0}/getyears'.format(self.api_base)
+        result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
 
         if result.status_code == 200:
             return result.json()
-        else:
-            log.warning(f'def {sys._getframe().f_code.co_name}: {result.status_code}')
+
+    def getFtaListByCountry(self, exporting_code, is_exporter: bool):
+        self.headers["Referer"] = 'https://{0}'.format(self.host)
+        params = {
+            "countrycode": exporting_code,
+            "isimporter": "True" if is_exporter else "False",
+            "isexporter": "False" if is_exporter else "True",
+            "partnercode": "ALL",
+        }
+        link_api = '{0}/getftalistbycountry'.format(self.api_base)
+        result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
+
+        if result.status_code == 200:
+            return result.json()
 
 
 class MacMapResults(MacMap):
@@ -117,7 +138,7 @@ class MacMapResults(MacMap):
         self.headers = headers
         headers[
             "Referer"
-        ] = '{url_base}/{language}//query/results?reporter={rep}&partner={par}&product={tn_ved}&level=6'.format(
+        ] = '{url_base}/{language}//query/results?reporter={rep}&partner={par}&product={tn_ved}&level=8'.format(
             url_base=url_base, language=language, rep=reporter, par=partner, tn_ved=tn_ved_10
         )
         self.params = {
@@ -126,13 +147,33 @@ class MacMapResults(MacMap):
             , "product": tn_ved_10
         }
 
-    def customduties(self):
+    def customDuties(self):
         link_api = '{0}/customduties'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
+        result = requests_get(self.session, link_api, params=self.params, headers=self.headers, )  # proxies=proxy)
         return result
 
-    def tariff_regime_country_list(self):
-        data = self.customduties()
+    def customDutiesByYear(self, year):
+        """
+        def getYears():
+            https://www.macmap.org/api/getyears?datatype=Tariff&reporters=466
+            ...
+        1) https://www.macmap.org/ru/query/customs-duties?reporter=466&year=2024&partner=all&product=220190&level=6
+        2) data = getYears()
+        3) https://www.macmap.org/api/results/custom-duties-by-year?reporter=466&partner=all&product=2201900000&year=2024
+        """
+        params = {
+            "reporter": self.reporter,
+            "partner": "all",
+            "product": self.tn_ved,
+            "year": year,
+        }
+        link_api = '{0}/custom-duties-by-year'.format(self.api_base)
+        result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
+        if result.status_code == 200:
+            return result.json()
+
+    def tariffRegimeCountryList(self):
+        data = self.customDuties()
         result_data = []
         for i_data in data.get("CustomDuty"):
             params = {
@@ -141,21 +182,36 @@ class MacMapResults(MacMap):
                 "year": "latest",
             }
             link_api = '{0}/tariff-regime-country-list'.format(self.api_base)
-            result = getApi(link_api, params=params, headers=self.headers)
+            # result = getApi(link_api, params=params, headers=self.headers)
+            result = requests_get(self.session, link_api, params=params, headers=self.headers, )  # proxies=proxy)
             result_data.append(result)
         return result_data
 
-    def ntm_measures(self):
+    def ntmMeasures(self):
         link_api = '{0}/ntm-measures'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
+        # result = getApi(link_api, params=self.params, headers=self.headers)
+        result = requests_get(self.session, link_api, params=self.params, headers=self.headers, )  # proxies=proxy)
         return result
 
-    def traderemedy(self):
+    def ntm_measure_by_regulation(self, direction):
+        """
+        direction
+        I - Import
+        E - Export
+        """
+        link_api = '{0}/ntm-measure-by-regulation'.format(self.api_base)
+        self.params['regType'] = direction
+        result = requests_get(self.session, link_api, params=self.params, headers=self.headers, )  # proxies=proxy)
+        return result
+
+    def tradereMedy(self):
         link_api = '{0}/traderemedy'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
+        # result = getApi(link_api, params=self.params, headers=self.headers)
+        result = requests_get(self.session, link_api, params=self.params, headers=self.headers, )  # proxies=proxy)
         return result
 
     def taxes(self):
         link_api = '{0}/taxes'.format(self.api_base)
-        result = getApi(link_api, params=self.params, headers=self.headers)
+        # result = getApi(link_api, params=self.params, headers=self.headers)
+        result = requests_get(self.session, link_api, params=self.params, headers=self.headers, )  # proxies=proxy)
         return result

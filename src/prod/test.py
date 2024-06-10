@@ -49,7 +49,7 @@ def main():
     country_list = [i['Code'] for i in countries]
     # ---------------------------------------------- update Products STOP ----------------------------------------------
     for i_country in country_list:
-        if i_country in '008':
+        if i_country in '032':
             # country_code = getProducts(i_country)
             country_code = getPlan(i_country)
             # count = 0
