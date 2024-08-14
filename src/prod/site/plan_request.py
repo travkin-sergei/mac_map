@@ -1,8 +1,8 @@
-from src.prod.site.class_site import MacMap
+from src.prod.site.class_site import Macmap
 
-mac_map_main = MacMap()
+mac_map_main = Macmap()
 
-countries_list = MacMap().countries()
+countries_list = Macmap().countries()
 countries = [i['Code'] for i in countries_list]
 
 

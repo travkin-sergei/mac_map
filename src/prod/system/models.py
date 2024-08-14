@@ -8,7 +8,7 @@ from sqlalchemy import (
     String,
     sql,
 )
-from sqlalchemy.orm import Mapped, mapped_column,  DeclarativeBase, registry
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, registry
 
 str_3 = Annotated[str, 3]
 str_64 = Annotated[str, 64]
@@ -365,10 +365,11 @@ class Products(Base):
     is_active: Mapped[is_active]
 
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
     country: Mapped[str | None] = mapped_column(comment='Страна')
     code: Mapped[str | None] = mapped_column(comment='ТН ВЭД')
     name: Mapped[str | None] = mapped_column(Text, comment='Описание ТН ВЭД')
+    language: Mapped[str | None] = mapped_column(comment='язык')
+    name_rus: Mapped[str | None] = mapped_column(Text, comment='Описание ТН ВЭД на русском языке')
     is_plan: Mapped[is_active]
 
 
@@ -413,4 +414,3 @@ class TradeAgreements(Base):
     status_desc: Mapped[str | None] = mapped_column(comment='описание соглашения')
     status_code: Mapped[str | None] = mapped_column(comment='код статуса соглашения')
     roo_avai_lable: Mapped[bool | None] = mapped_column(comment='')
-

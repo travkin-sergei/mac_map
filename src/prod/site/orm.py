@@ -32,7 +32,7 @@ def updateCountry(incoming_data):
     # it is important to match the same set of fields with the database.
     # The calculation algorithms should be the same
     incoming_data["hash_address"] = hash_sum_256(
-        [incoming_data.get("Code"), incoming_data.get("ISO2"), incoming_data.get("ISO3")]
+        incoming_data.get("Code"), incoming_data.get("ISO2"), incoming_data.get("ISO3")
     )
     new_object = Country(
         hash_address=incoming_data.get('hash_address'),
@@ -56,56 +56,76 @@ def updateCountry(incoming_data):
 
 
 @logger_fun
-def updateProducts(incoming_data, country):
-    incoming_data["country"] = country
-
-    incoming_data["hash_data"] = hash_sum_256([i for i in incoming_data.values()])
-    # it is important to match the same set of fields with the database.
-    # The calculation algorithms should be the same
-    incoming_data["hash_address"] = hash_sum_256([
-        incoming_data.get("country"),
-        incoming_data.get("Code"),
-    ])
+def insert_products(data, country):
+    """
+    Создание записи ТН ВЭД страна
+    """
+    data["Country"] = country
+    data["hash_address"] = hash_sum_256(data.get("Country"), data.get("Code"), )
     new_object = Products(
         is_active=True,
-        hash_address=incoming_data.get('hash_address'),
-        hash_data=incoming_data.get('hash_data'),
-        country=incoming_data.get('country'),
-        code=incoming_data.get('Code'),
-        name=incoming_data.get('Name'),
+        hash_address=data.get('hash_address'),
+        country=data.get('Country'),
+        code=data.get('Code'),
+        name=data.get('Name'),
+        name_rus=data.get('name_rus'),
+        language=data.get('language'),
     )
     with session_sync() as session:
         old_object = session.query(Products).filter_by(hash_address=new_object.hash_address).first()
         if old_object is None:
             session.add(new_object)
             session.commit()
-        elif old_object.hash_data != new_object.hash_data:
-            old_object.update(new_object)
 
 
 @logger_fun
-def getProducts(country):
+def get_products(country):
     with session_sync() as session:
         result = session.query(Products).filter_by(country=country, is_plan=True)
         session.flush()
         session.commit()
         return result
+
+
 @logger_fun
-def setProducts(obj_id):
+def get_products2(country):
+    with session_sync() as session:
+        result = session.query(Products).filter_by(country=country, is_plan=True, name_rus=None)
+        session.flush()
+        session.commit()
+        return result
+
+
+@logger_fun
+def set_products(obj_id):
     with session_sync() as session:
         odj = session.get(Products, obj_id)
         odj.is_plan = False
         session.add(odj)
         session.commit()
+
+
 @logger_fun
-def getPlan(country):
+def set_products2(plan_id, name_rus):
+    """update name_rus"""
+    with session_sync() as session:
+        odj = session.get(Products, plan_id)
+        odj.name_rus = name_rus
+        session.add(odj)
+        session.commit()
+
+
+@logger_fun
+def get_plan(country):
     with session_sync() as session:
         result = session.query(PlanRequest).filter_by(reporter=country, is_active=True)
         session.flush()
         session.commit()
         return result
+
+
 @logger_fun
-def setPlan(obj_id):
+def set_plan(obj_id):
     print('=======================================')
     with session_sync() as session:
         odj = session.get(PlanRequest, obj_id)
@@ -113,7 +133,6 @@ def setPlan(obj_id):
         session.add(odj)
         session.commit()
         print('setPlan_setPlan_setPlan_setPlan')
-
 
 
 @logger_fun
@@ -262,7 +281,6 @@ def measuresUpdate(i_e, query_id, data):
                 incoming_data["query_id"] = query_id
                 incoming_data["hash_data"] = hash_sum_256([i for i in incoming_data.values()])
                 incoming_data["hash_address"] = incoming_data.get("hash_data")
-
 
                 data_rec = {
                     "hash_address": incoming_data.get('hash_address'),
@@ -428,17 +446,17 @@ def taxesUpdate(query_id, incoming_data, ):
 
 
 @logger_fun
-def checkingQueryPlan(reporter, partner, tn_ved, language='en'):
-    """переделать"""
-
+def checking_query_plan(reporter, partner, tn_ved, language='en'):
+    """
+    Добавление данных в таблицу macmap.plan_request
+    """
     data_rec = {
         "reporter": reporter,
         "partner": partner,
         "tn_ved": tn_ved,
         "language": language
     }
-    data_rec["hash_address"] = hash_sum_256([i for i in data_rec.values()])
-    data_rec["hash_data"] = data_rec.get("hash_address")
+    data_rec["hash_address"] = hash_sum_256(data_rec.get('reporter'), data_rec.get('tn_ved'))
     with session_sync() as session:
         odj = session.query(PlanRequest).filter_by(hash_address=data_rec["hash_address"]).first()
         if odj is None:
@@ -447,12 +465,6 @@ def checkingQueryPlan(reporter, partner, tn_ved, language='en'):
             session.commit()
             session.refresh()
             return stmt
-        elif odj.hash_data != data_rec.get("hash_data"):
-            odj.reporter = data_rec.get("reporter")
-            odj.partner = data_rec.get("partner")
-            odj.tn_ved = data_rec.get("tn_ved")
-            odj.language = data_rec.get("language")
-            session.commit()
         return odj
 
 

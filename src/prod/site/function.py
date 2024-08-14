@@ -1,6 +1,8 @@
 import re
 import sys
 import hashlib
+import time
+
 import requests
 
 from src.prod.site.log import logger_fun
@@ -25,15 +27,15 @@ def requests_get(session, link, params, **kwargs):
         requests_get.call_count = 1
         count_get = requests_get.call_count
 
-    proxies = {
-        'https': 'socks5://mGRWQE9F:tFk4qw8D@85.142.130.211:62679'
-    }
+    proxy = {'http': 'http://xHdTAr:SpE6Rc@95.164.128.227:9842'}
     result = None
     for _ in range(MAX_RETRIES):
 
         # result = requests.get(link, params, **kwargs, )
-        result = session.get(link, params=params, **kwargs, )  # proxies=proxy)
-        match result.status_code == 200:
+        result = session.get(link, params=params, **kwargs)  # ,  proxies=proxy)
+
+        print(result.status_code)
+        match result.status_code:
             case 200:
                 result.encoding = 'utf-8'
                 result.raise_for_status()
@@ -48,7 +50,7 @@ def requests_get(session, link, params, **kwargs):
 
                 exit()
             case _:
-                pass
+                time.sleep(40)
 
     return result
 
