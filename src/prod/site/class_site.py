@@ -1,3 +1,7 @@
+"""
+Представление API сайта как класса
+"""
+
 import uuid
 import requests
 from fake_useragent import UserAgent
@@ -148,11 +152,11 @@ class Macmap:
         link = https://www.macmap.org/api/products?countryCode=004&level=8
         """
         self.headers["Referer"] = 'https://{0}'.format(self.host)
-        params = {
-            "countryCode": code,
-            "level": 8,
-        }
+        params = {"countryCode": code, "level": 8, }
         link_api = '{0}/products'.format(self.api_base)
-        result = requests_get(self.session, link_api, params=params, headers=self.headers)  # proxies=proxy)
+        result = requests_get(
+            self.session, link_api, params=params, headers=self.headers, timeout=(5, 60)  # , proxies=proxy)
+        )
+
         if result.status_code == 200:
             return result.json()

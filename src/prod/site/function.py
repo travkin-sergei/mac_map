@@ -3,7 +3,7 @@ import sys
 import hashlib
 import time
 
-import requests
+
 
 from src.prod.site.log import logger_fun
 
@@ -12,6 +12,9 @@ MAX_RETRIES = 3
 
 @logger_fun
 def hash_sum_256(*args):
+    """
+    Получить хеш суму из args
+    """
     list_str = [str(i) for i in args]
     list_union = '+'.join(list_str)
     ha256 = hashlib.sha256(list_union.encode()).hexdigest()
@@ -56,7 +59,10 @@ def requests_get(session, link, params, **kwargs):
 
 
 @logger_fun
-def camelToSnake(data):
+def camel_to_snake(data):
+    """
+    Изменить сталь написания с CamelCase на snake_case
+    """
     for old_key in data:
         for old_key in data:
             for old_key in data:

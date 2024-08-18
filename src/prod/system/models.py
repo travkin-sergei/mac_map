@@ -384,7 +384,6 @@ class PlanRequest(Base):
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
 
     reporter: Mapped[str | None] = mapped_column(comment='экспортер')
     partner: Mapped[str | None] = mapped_column(comment='импортер')

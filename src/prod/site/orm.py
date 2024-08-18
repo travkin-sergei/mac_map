@@ -88,12 +88,20 @@ def get_products(country):
 
 
 @logger_fun
-def get_products2(country):
+def get_products2():
     with session_sync() as session:
-        result = session.query(Products).filter_by(country=country, is_plan=True, name_rus=None)
-        session.flush()
-        session.commit()
+        result = session.query(Products).filter_by(is_plan=True, name_rus=None).yield_per(100)
         return result
+
+
+def get_county():
+    """
+    Получение списка стран
+    """
+    with session_sync() as session:
+        country = session.query(Country)
+        country_list = [i.code for i in country]
+    return country_list
 
 
 @logger_fun
@@ -107,7 +115,7 @@ def set_products(obj_id):
 
 @logger_fun
 def set_products2(plan_id, name_rus):
-    """update name_rus"""
+    """update name"""
     with session_sync() as session:
         odj = session.get(Products, plan_id)
         odj.name_rus = name_rus

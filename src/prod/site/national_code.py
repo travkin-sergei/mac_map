@@ -1,31 +1,47 @@
 """
-Получение списка стран и их ТН ВЭД максимальной доступной версии h6
+Получение списка Национальных кодов ТН ВЭД
 подробнее на сайте - https://www.macmap.org/en/resources/product-search?reporter=004&keyword=010110&level=false
 """
-
+import json
+import time
+import pandas as pd
 from src.prod.site.class_site import Macmap
-from src.prod.site.orm import ormCreateTable, insert_products
-from src.test.translated import translated_text
+from src.prod.site.function import hash_sum_256
+from src.prod.site.orm import ormCreateTable, get_county
+from src.prod.system.database import engine_sync
 
-priorities_list = [
-    # '008','040','050', '056','070', '072', '100', '108', '156', '204',
-     '222', '233',
-    #'242', '246', '251', '270',
-    # '288', '324', '344', '384', '404', '426', '428', '430', '440', '442', '446', '466', '480', '490', '516', '520',
-    # '524', '528', '562', '566', '585', '586', '598', '616', '624', '642', '646', '686', '694', '699', '702', '703',
-    # '710', '724', '748', '768', '788', '792', '800', '834', '854', '876', '895',
-]
-
+replace_dict = {
+    '""""""': '"',
+    '"""""': '"',
+    '""""': '"',
+    '"""': '"',
+    '""': '"',
+    '¬¬--': '',
+    '\n': ' ',
+    '\t': ' ',
+    '&nbsp;': ' ',
+}
+address = r'C:\Users\Sergei\Downloads\MacMap'
 ormCreateTable()
 mac_map = Macmap()
-
-# country_list = [i['Code'] for i in mac_map.countries()]
-for i_country in priorities_list:
+error_list = []
+for i_country in get_county():
     try:
         tn_ved_list = mac_map.products(i_country)
-        for i_tn_ved in tn_ved_list:
-            i_tn_ved['language'] = translated_text(i_tn_ved.get('Name'))[0]
-            i_tn_ved['name_rus'] = translated_text(i_tn_ved.get('Name'))[1]
-            insert_products(i_tn_ved, i_country)
+        # hash_sum_256()
+        df = pd.read_json(json.dumps(tn_ved_list),dtype={"Code": str, "Name": str})
+        df.to_csv(f'{address}/json/{i_country}.json')
+        # переименовать столбцы
+        df = df.rename(columns={'Code': 'code', 'Name': 'name'})
+        # очистка данных от лишних символов
+        df['name'] = df['name'].replace(replace_dict, regex=True)
+        df['country'] = i_country
+        df['hash_address'] = df.apply(lambda x: hash_sum_256(x['country'], x['code']), axis=1)
+        # запись в базу данных
+        df.to_csv(f'{address}/csv/{i_country}.csv')
+        df.to_sql('products2', engine_sync, schema='macmap', if_exists='append', index=False)
     except:
-        print(f'Ошибка: Страна = {i_country}, ТН ВЭД = {i_tn_ved}')
+        print(f'Ошибка: Страна = {i_country}')
+        error_list.append(i_country)
+        time.sleep(22)
+print(f'Не смог проверить: {error_list}')
