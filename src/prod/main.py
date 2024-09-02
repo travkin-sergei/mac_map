@@ -5,7 +5,7 @@
 import concurrent.futures
 import time
 
-from src.prod.site.orm import (
+from . site.orm import (
     ormCreateTable,
     customDutiesUpdate,
     customDutiesLevelUpdate,
