@@ -52,9 +52,9 @@ class Country(Base):
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
 
     foreign_id: Mapped[int] = mapped_column(comment='внешний id')
+
     code: Mapped[str | None] = mapped_column(comment='цифровой код длинной 3 символа')
     name: Mapped[str | None] = mapped_column(comment='Название страны')
     i_s_o2: Mapped[str | None] = mapped_column(comment='буквенный код длинной 2 символа')
@@ -75,9 +75,9 @@ class CustomDuties(Base):
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
 
     query_id: Mapped[int] = mapped_column(comment='id запроса')
+
     n_t_l_c_code_label: Mapped[str | None] = mapped_column(comment='Кодовая метка NTL C')
     n_t_l_c_code_tooltip_label: Mapped[str | None] = mapped_column(comment='Метка всплывающей подсказки кода NTL C')
     n_t_l_c_description_label: Mapped[str | None] = mapped_column(comment='Этикетка с описанием NTL C')
@@ -145,7 +145,7 @@ class CustomDutiesLevel(Base):
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
+
     query_id: Mapped[int] = mapped_column(comment='id запроса')
 
     n_t_l_c_code: Mapped[str | None] = mapped_column(comment='Код NTLC')
@@ -181,9 +181,8 @@ class Taxes(Base):
     created_at: Mapped[created_at]
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
-
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
+
     query_id: Mapped[int] = mapped_column(comment='id запроса')
 
     tax_information_label: Mapped[str | None] = mapped_column(comment='Табличка с налоговой информацией')
@@ -239,9 +238,8 @@ class TradeRemedy(Base):
     created_at: Mapped[created_at]
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
-
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
+
     query_id: Mapped[int] = mapped_column(comment='id запроса')
 
     th_exporting_country: Mapped[str | None] = mapped_column(comment='Страна-экспортер')
@@ -277,9 +275,8 @@ class NtmMeasures(Base):
     created_at: Mapped[created_at]
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
-
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
+
     query_id: Mapped[int] = mapped_column(comment='id запроса')
 
     measure_section: Mapped[str | None] = mapped_column(comment='Направление перемещения')
@@ -303,12 +300,11 @@ class Measures(Base):
     created_at: Mapped[created_at]
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
-
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
-    query_id: Mapped[int] = mapped_column(comment='id запроса')
-    measure_section: Mapped[str | None] = mapped_column(comment='Направление перемещения')
 
+    query_id: Mapped[int] = mapped_column(comment='id запроса')
+
+    measure_section: Mapped[str | None] = mapped_column(comment='Направление перемещения')
     measure_code: Mapped[str | None] = mapped_column(comment='Код измерения')
     measure_title: Mapped[str | None] = mapped_column(comment='Название меры')
     measure_summary: Mapped[str | None] = mapped_column(comment='Краткое описание меры')
@@ -325,12 +321,11 @@ class AllMeasures(Base):
     created_at: Mapped[created_at]
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
-
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
-    query_id: Mapped[int] = mapped_column(comment='id запроса')
-    measure_section: Mapped[str | None] = mapped_column(comment='Направление перемещения')
 
+    query_id: Mapped[int] = mapped_column(comment='id запроса')
+
+    measure_section: Mapped[str | None] = mapped_column(comment='Направление перемещения')
     code: Mapped[str | None] = mapped_column(comment='Код')
     title: Mapped[str | None] = mapped_column(comment='Заглавие')
     summary: Mapped[str | None] = mapped_column(comment='Резюме')
@@ -363,8 +358,8 @@ class Products(Base):
     created_at: Mapped[created_at]
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
-
     hash_address: Mapped[hash_address | None]
+
     country: Mapped[str | None] = mapped_column(comment='Страна')
     code: Mapped[str | None] = mapped_column(comment='ТН ВЭД')
     name: Mapped[str | None] = mapped_column(Text, comment='Описание ТН ВЭД')
@@ -402,7 +397,6 @@ class TradeAgreements(Base):
     update_at: Mapped[update_at]
     is_active: Mapped[is_active]
     hash_address: Mapped[hash_address | None]
-    hash_data: Mapped[hash_data | None]
 
     country: Mapped[str | None] = mapped_column(comment='страна')
     flow: Mapped[str | None] = mapped_column(comment='описание торговых потоков')

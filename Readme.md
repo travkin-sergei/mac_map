@@ -1,7 +1,6 @@
 # Получение данных по API MacMap.org
 ## Термины и определения
 + hash_address - hashSum256 от выбранных полей строки
-+ hash_data - hashSum256 от всех полей строки
 ## Технология
 + python 3.12
 + requests

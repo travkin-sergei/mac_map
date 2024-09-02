@@ -3,10 +3,10 @@ from sqlalchemy.orm import sessionmaker
 from src.prod.system.config import settings
 
 engine_sync = create_engine(
-    url=settings.DATABASE_URL_psycopg,
     echo=False,
+    url=settings.DATABASE_URL_psycopg,
     # pool_size=5,
-    # max_overflow=10,
+    max_overflow=20,
 )
 
 session_sync = sessionmaker(engine_sync)

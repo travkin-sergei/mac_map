@@ -5,15 +5,7 @@
 import time
 
 from src.prod.site.class_site import Macmap
-from src.prod.site.log import logger_fun
 from src.prod.site.orm import (
-    customDutiesUpdate,
-    customDutiesLevelUpdate,
-    ntmMeasuresUpdate,
-    measuresUpdate,
-    allMeasuresUpdate,
-    tradeRemedyUpdate,
-    taxesUpdate,
     checking_query_plan, ormCreateTable,
 )
 

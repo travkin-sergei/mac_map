@@ -8,13 +8,14 @@ for _ in range(3):
     address_log = '/'.join(address)
 
 
-
 def log_connect():
     logging.basicConfig(
+        level=logging.WARNING,
         filename=f"{address_log}/logger.log",
         format='%(asctime)s,%(msecs)d,%(name)s,%(levelname)s,%(message)s',
     )
-    result = logging.getLogger()#"sqlalchemy.engine").setLevel(logging.INFO)
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+    result = logging.getLogger()  # "sqlalchemy.engine").setLevel(logging.INFO)
     return result
 
 

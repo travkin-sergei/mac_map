@@ -4,7 +4,7 @@
 import time
 import multiprocessing
 from deep_translator import GoogleTranslator
-from src.prod.site.orm import get_products2, set_products2, get_county
+from src.prod.site.orm import get_products_name, set_products2
 
 
 def translated_text(text: str):
@@ -15,17 +15,16 @@ def translated_text(text: str):
     return translated
 
 
-def process_country(i_country):
+def process_country(i_name):
     try:
-        for i in get_products2():
-            name_ru = translated_text(i.name)
-            print(f'country:{i_country}, name_ru:{name_ru},id:{i.id}')
-            set_products2(i.id, name_ru)
+        name_ru = translated_text(i_name[0])
+        print(f' name_ru:{name_ru}')
+        set_products2(i_name[0], name_ru)
     except:
-        print(f'{i_country}')
-        time.sleep(10)
+        print(f'fatal')
+        time.sleep(60)
 
 
 if __name__ == '__main__':
-    with multiprocessing.Pool(processes=10) as pool:
-        pool.map(process_country, get_county())
+    with multiprocessing.Pool(processes=6) as pool:
+        pool.map(process_country, get_products_name())
