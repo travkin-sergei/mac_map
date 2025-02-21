@@ -6,6 +6,14 @@
 + requests
 + sqlalchemy
 
+```bash
+python.exe -m pip install --upgrade pip
+```
+
+```bash
+pip install -r requirements.txt
+```
+
 ### Преобразование
 ```python
 import re

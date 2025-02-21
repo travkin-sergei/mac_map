@@ -1,9 +1,6 @@
 import re
-import sys
 import hashlib
 import time
-
-
 
 from src.prod.site.log import logger_fun
 
@@ -69,3 +66,40 @@ def camel_to_snake(data):
                 new_key = re.sub(r'(?<!^)(?=[A-Z])', '_', old_key).lower()
         print(old_key, ';', new_key)
     return data
+
+
+@logger_fun
+def convert_string(text):
+    """
+    Преобразование строки:
+        a) унификация переносов строк
+        b) удаление непечатных символов
+        c) удаление лишних пробелов
+        d) удаление лишних переносов строк
+        e) дублирующих кавычек
+        f) лишних кавычек
+    :param text: str
+    :return: str
+    """
+    # a) унификация переносов строк
+    pattern = r'[\r\n\u0085\u2028\u2029\t]'
+    text = re.sub(pattern, '\n', text)
+    # b) удаление непечатных символов
+    pattern = r'[\x00-\x1F\x7F-\x9F\u200B\u200C\u200D\uFEFF]'
+    text = re.sub(pattern, "", text)
+    # c) удаление лишних пробелов
+    text = re.sub(r'\s+', ' ', text)
+    # d) удаление лишних переносов строк
+    text = re.sub(r'\n+', '\n', text)
+    words = text.split(' ')
+    result = []
+    # e) дублирующих кавычек
+    for word in words:
+        word = re.sub(r'^""', '«', word)  # Начальные двойные кавычки
+        word = re.sub(r'""$', '»', word)  # Конечные двойные кавычки
+        word = word.replace('""', '»')  # Остальные двойные кавычки
+        result.append(word)
+    # f) лишних кавычек
+    res = re.sub(r'^"|"$', '', ' '.join(result))  # Удаление одиночных кавычек по краям
+    # Удаление непарных кавычек. Простая замена не сделана т.к. надо найти другие ошибки и обработать их
+    return res.replace('»"»', '»»')

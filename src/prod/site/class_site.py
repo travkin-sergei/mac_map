@@ -146,6 +146,7 @@ class Macmap:
         if result.status_code == 200:
             return result.json()
 
+    # Получение списка ТН ВЭД для каждой страны отдельно
     def products(self, code):
         """
         Получение списка ТН ВЭД для каждой страны отдельно

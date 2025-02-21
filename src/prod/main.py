@@ -47,6 +47,7 @@ def process_country(i_country):
         for i_code in country_code:
             mac_map2 = Macmap()
             info = mac_map2.custom_duties_by_year(i_country, i_code.tn_ved, max_year, )
+
             if info.get('NTLCCodeLabel'):
                 customDutiesUpdate(i_code.id, info)
                 customDutiesLevelUpdate(i_code.id, info)
