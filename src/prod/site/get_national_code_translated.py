@@ -1,6 +1,5 @@
-"""
-Перевод ТН ВЭД
-"""
+"""Перевод текста на русский язык"""
+
 import time
 import multiprocessing
 from deep_translator import GoogleTranslator
@@ -8,9 +7,8 @@ from src.prod.site.orm import get_products_name, set_products2
 
 
 def translated_text(text: str):
-    """
-    Перевод текста с помощью гугла
-    """
+    """Перевод текста с помощью гугла."""
+
     translated = GoogleTranslator(source='auto', target='ru', ).translate(text)
     return translated
 
@@ -27,4 +25,5 @@ def process_country(i_name):
 
 if __name__ == '__main__':
     with multiprocessing.Pool(processes=6) as pool:
+        """Выборка данных из базы данных."""
         pool.map(process_country, get_products_name())

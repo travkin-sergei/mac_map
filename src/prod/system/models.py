@@ -360,6 +360,8 @@ class Products(Base):
     is_active: Mapped[is_active]
     hash_address: Mapped[hash_address | None]
 
+    classification_code: Mapped[str | None] = mapped_column(comment='Коды гармонизированной системы')
+    classification_description: Mapped[str | None] = mapped_column(comment='Описание гармонизированной системы')
     country: Mapped[str | None] = mapped_column(comment='Страна')
     code: Mapped[str | None] = mapped_column(comment='ТН ВЭД')
     name: Mapped[str | None] = mapped_column(Text, comment='Описание ТН ВЭД')

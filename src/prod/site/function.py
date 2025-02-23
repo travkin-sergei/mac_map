@@ -8,10 +8,9 @@ MAX_RETRIES = 3
 
 
 @logger_fun
-def hash_sum_256(*args):
-    """
-    Получить хеш суму из args
-    """
+def hash_sum_256(*args) -> str:
+    """Получить хеш суму из args."""
+
     list_str = [str(i) for i in args]
     list_union = '+'.join(list_str)
     ha256 = hashlib.sha256(list_union.encode()).hexdigest()
@@ -20,6 +19,8 @@ def hash_sum_256(*args):
 
 @logger_fun
 def requests_get(session, link, params, **kwargs):
+    """ Повторная отправка GET запроса в случае неудачи."""
+
     try:
         requests_get.call_count += 1
         count_get = requests_get.call_count
@@ -57,9 +58,8 @@ def requests_get(session, link, params, **kwargs):
 
 @logger_fun
 def camel_to_snake(data):
-    """
-    Изменить сталь написания с CamelCase на snake_case
-    """
+    """Изменить сталь написания с CamelCase на snake_case"""
+
     for old_key in data:
         for old_key in data:
             for old_key in data:
@@ -69,7 +69,7 @@ def camel_to_snake(data):
 
 
 @logger_fun
-def convert_string(text):
+def convert_string(text: str) -> str:
     """
     Преобразование строки:
         a) унификация переносов строк
@@ -102,4 +102,10 @@ def convert_string(text):
     # f) лишних кавычек
     res = re.sub(r'^"|"$', '', ' '.join(result))  # Удаление одиночных кавычек по краям
     # Удаление непарных кавычек. Простая замена не сделана т.к. надо найти другие ошибки и обработать их
+
+    """
+    не реализовано преобразование:
+        1) "1-""1,3-Benzodioxol-5-yl""propan-2-one" => "1-(1,3-Benzodioxol-5-yl)propan-2-one"
+        2) Dinosèbe [ISO] et ses sels"»
+    """
     return res.replace('»"»', '»»')

@@ -147,6 +147,20 @@ class Macmap:
             return result.json()
 
     # Получение списка ТН ВЭД для каждой страны отдельно
+    def latest_hs_rev(self, code):
+        """
+        link = 'https://www.macmap.org/api/latest-hs-rev?countryCode=020'
+        """
+        self.headers["Referer"] = 'https://{0}'.format(self.host)
+        params = {"countryCode": code, }
+        link_api = '{0}/latest-hs-rev'.format(self.api_base)
+
+        result = requests_get(
+            self.session, link_api, params=params, headers=self.headers, timeout=(5, 60)  # , proxies=proxy)
+        )
+        if result.status_code == 200:
+            return result.json()
+
     def products(self, code):
         """
         Получение списка ТН ВЭД для каждой страны отдельно
